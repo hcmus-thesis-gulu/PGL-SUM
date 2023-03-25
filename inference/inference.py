@@ -25,7 +25,8 @@ def inference(model, data_path, keys, eval_method):
     for video in keys:
         with h5py.File(data_path, "r") as hdf:
             # Input features for inference
-            frame_features = torch.Tensor(np.array(hdf[f"{video}/features"])).view(-1, 1024)
+            video_features = np.array(hdf[f"{video}/features"])
+            frame_features = torch.Tensor(video_features).view(-1, 1024)
             # Input need for evaluation
             user_summary = np.array(hdf[f"{video}/user_summary"])
             sb = np.array(hdf[f"{video}/change_points"])
@@ -34,6 +35,8 @@ def inference(model, data_path, keys, eval_method):
 
         with torch.no_grad():
             scores, _ = model(frame_features)  # [1, seq_len]
+            print("SCORE SHAPE: ", scores.shape, " ----------------\n")
+            print("SCORES: ", torch.sum(scores))
             scores = scores.squeeze(0).cpu().numpy().tolist()
             summary = generate_summary([sb], [scores], [n_frames], [positions])[0]
             f_score = evaluate_summary(summary, user_summary, eval_method)
@@ -46,8 +49,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default='SumMe', help="Dataset to be used. Supported: {SumMe, TVSum}")
     parser.add_argument("--table", type=str, default='4', help="Table to be reproduced. Supported: {3, 4}")
+    parser.add_argument("--device", type=str, default='gpu', help="Type of device, can be gpu or cpu")
 
     args = vars(parser.parse_args())
+    device = args["device"]
     dataset = args["dataset"]
     table = args["table"]
 
@@ -69,5 +74,5 @@ if __name__ == "__main__":
         # Create model with paper reported configuration
         trained_model = PGL_SUM(input_size=1024, output_size=1024, num_segments=4, heads=8,
                                 fusion="add", pos_enc="absolute")
-        trained_model.load_state_dict(torch.load(join(model_path, model_file[-1])))
+        trained_model.load_state_dict(torch.load(join(model_path, model_file[-1]), map_location=torch.device(device)))
         inference(trained_model, dataset_path, test_keys, eval_metric)
