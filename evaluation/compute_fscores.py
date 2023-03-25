@@ -22,7 +22,7 @@ eval_method = args["eval"]
 
 results = [f for f in listdir(path) if f.endswith(".json")]
 results.sort(key=lambda video: int(video[6:-5]))
-dataset_path = '../PGL-SUM/data/datasets/' + dataset + '/eccv16_dataset_' + dataset.lower() + '_google_pool5.h5'
+dataset_path = '../PGL-SUM/data/' + dataset + '/eccv16_dataset_' + dataset.lower() + '_google_pool5.h5'
 
 f_score_epochs = []
 for epoch in results:                       # for each epoch ...
