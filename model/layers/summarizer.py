@@ -7,8 +7,14 @@ from layers.attention import SelfAttention
 
 
 class MultiAttention(nn.Module):
-    def __init__(self, input_size=1024, output_size=1024, freq=10000, pos_enc=None,
-                 num_segments=None, heads=1, fusion=None):
+    def __init__(self,
+                 input_size=1024,
+                 output_size=1024,
+                 freq=10000,
+                 pos_enc=None,
+                 num_segments=None,
+                 heads=1,
+                 fusion=None):
         """ Class wrapping the MultiAttention part of PGL-SUM; its key modules and parameters.
 
         :param int input_size: The expected input feature size.

@@ -1,9 +1,7 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
-#from scipy.linalg.decomp import eig
-import scipy
-from scipy.linalg import eigh
+from torch.linalg import eigh
 from scipy import ndimage
 #from sklearn.mixture import GaussianMixture
 #from sklearn.cluster import KMeans
@@ -22,47 +20,47 @@ def ncut(feats, dims, scales, init_image_size, tau = 0, eps=1e-5, im_name='', no
       no_binary_graph: ablation study for using similarity score as graph edge weight
     """
     feats = F.normalize(feats, p=2, dim=0)
-    A = (feats.transpose(0,1) @ feats)
-    A = A.cpu().numpy()
+    adjacency_matrix = (feats.transpose(0,1) @ feats)
+    # A = A.cpu().numpy()
+    
     if no_binary_graph:
-        A[A<tau] = eps
+        adjacency_matrix[adjacency_matrix<tau] = eps
     else:
-        A = A > tau
-        A = np.where(A.astype(float) == 0, eps, A)
-    d_i = np.sum(A, axis=1)
-    D = np.diag(d_i)
+        adjacency_matrix = adjacency_matrix > tau
+        adjacency_matrix = torch.where(adjacency_matrix.float() == 0, eps, adjacency_matrix)
+    diagonal_sum = torch.sum(adjacency_matrix, dim=1)
+    diagonal_matrix = torch.diag(diagonal_sum)
 
     # Print second and third smallest eigenvector
-    _, eigenvectors = eigh(D-A, D, subset_by_index=[1,2])
-    eigenvec = np.copy(eigenvectors[:, 0])
-
+    _, eigenvectors = eigh(diagonal_matrix-adjacency_matrix, diagonal_matrix, eigvals=(1,2))
+    eigenvec = eigenvectors[:, 0].clone()
 
     # method1 avg
     second_smallest_vec = eigenvectors[:, 0]
-    avg = np.sum(second_smallest_vec) / len(second_smallest_vec)
+    avg = torch.sum(second_smallest_vec) / len(second_smallest_vec)
     bipartition = second_smallest_vec > avg
 
-    seed = np.argmax(np.abs(second_smallest_vec))
+    seed = torch.argmax(torch.abs(second_smallest_vec))
 
     if bipartition[seed] != 1:
         eigenvec = eigenvec * -1
-        bipartition = np.logical_not(bipartition)
+        bipartition = torch.logical_not(bipartition)
     bipartition = bipartition.reshape(dims).astype(float)
 
     # predict BBox
-    pred, _, objects,cc = detect_box(bipartition, seed, dims, scales=scales, initial_im_size=init_image_size) ## We only extract the principal object BBox
-    mask = np.zeros(dims)
+    pred, _, objects, cc = detect_box(bipartition, seed, dims, scales=scales, initial_im_size=init_image_size) ## We only extract the principal object BBox
+    mask = torch.zeros(dims)
     mask[cc[0],cc[1]] = 1
 
-    mask = torch.from_numpy(mask).to('cuda')
+    mask = mask.to('cuda')
 #    mask = torch.from_numpy(bipartition).to('cuda')
     bipartition = F.interpolate(mask.unsqueeze(0).unsqueeze(0), size=init_image_size, mode='nearest').squeeze()
     
 
     eigvec = second_smallest_vec.reshape(dims) 
-    eigvec = torch.from_numpy(eigvec).to('cuda')
+    eigvec = eigvec.to('cuda')
     eigvec = F.interpolate(eigvec.unsqueeze(0).unsqueeze(0), size=init_image_size, mode='nearest').squeeze()
-    return  seed, bipartition.cpu().numpy(), eigvec.cpu().numpy()
+    return seed.cpu().numpy(), bipartition.cpu().numpy(), eigvec.cpu().numpy()
 
 def detect_box(bipartition, seed,  dims, initial_im_size=None, scales=None, principle_object=True):
     """

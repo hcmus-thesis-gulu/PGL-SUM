@@ -1,11 +1,11 @@
 import sys
 sys.path.append('./model')
-import dino # model
+from layers import dino # model
 
 import object_discovery as tokencut
 import argparse
 import utils
-import bilateral_solver
+from layers import bilateral_solver
 import os
 
 from shutil import copyfile

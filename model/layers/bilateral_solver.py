@@ -145,7 +145,7 @@ class BilateralSolver(object):
         xhat = self.grid.slice(yhat)
         return xhat
 
-def bilateral_solver_output(img_pth, target, sigma_spatial = 24, sigma_luma = 4, sigma_chroma = 4) : 
+def bilateral_solver_output(img_pth, target, sigma_spatial = 24, sigma_luma = 4, sigma_chroma = 4):
     
     reference = np.array(Image.open(img_pth).convert('RGB'))
     h, w = target.shape

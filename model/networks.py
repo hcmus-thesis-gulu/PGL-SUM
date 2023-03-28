@@ -9,7 +9,7 @@ import torch.nn as nn
 from torchvision.models.resnet import resnet50
 from torchvision.models.vgg import vgg16
 
-import dino.vision_transformer as vits
+import layers.vision_transformer as vits
 #import moco.vits as vits_moco
 
 def get_model(arch, patch_size, device):

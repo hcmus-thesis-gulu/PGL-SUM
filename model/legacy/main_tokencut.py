@@ -15,8 +15,8 @@ from tqdm import tqdm
 from PIL import Image
 
 from networks import get_model
-from datasets import ImageDataset, Dataset, bbox_iou
-from visualizations import visualize_img, visualize_eigvec, visualize_predictions, visualize_predictions_gt 
+# from datasets import ImageDataset, Dataset, bbox_iou
+# from visualizations import visualize_img, visualize_eigvec, visualize_predictions, visualize_predictions_gt 
 from object_discovery import ncut 
 import matplotlib.pyplot as plt
 import time
